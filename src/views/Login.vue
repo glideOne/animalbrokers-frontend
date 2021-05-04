@@ -29,7 +29,21 @@
 </template>
 
 <script>
-export default {}
+export default {
+  name: "login",
+  data() {
+    return {
+      email: "",
+      password: ""
+    }
+  },
+
+  methods: {
+    login: function () {
+      console.log("Email: " + this.email);
+    }
+  }
+}
 </script>
 
 <style scoped>

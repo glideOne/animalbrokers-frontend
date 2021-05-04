@@ -4,8 +4,11 @@ import "./registerServiceWorker";
 import router from "./router";
 import store from "./store";
 import firebase from "firebase";
+import VueResource from "vue-resource";
 
 Vue.config.productionTip = false;
+
+Vue.use(VueResource)
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
