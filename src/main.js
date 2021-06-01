@@ -5,6 +5,7 @@ import router from "./router";
 import store from "./store";
 import firebase from "firebase";
 import VueResource from "vue-resource";
+import vuetify from './plugins/vuetify'
 
 Vue.config.productionTip = false;
 
@@ -28,5 +29,6 @@ console.log(firebase);
 new Vue({
   router,
   store,
-  render: (h) => h(App),
+  vuetify,
+  render: (h) => h(App)
 }).$mount("#app");

@@ -1,12 +1,17 @@
 <template>
   <div class="container">
     <br>
-    <h1>Animal Brokers - Dashboard</h1>
+    <h1>Dashboard</h1>
+
+    <v-btn
+        elevation="2"
+        absolute
+        left
+        to="/createthread"
+    >Create new thread</v-btn>
   </div>
 
-<!--  <v-btn-->
-<!--      elevation="2"-->
-<!--  ></v-btn>-->
+
 
 </template>
 

@@ -4,6 +4,7 @@ import Home from "../views/Home.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Dashboard from "@/views/Dashboard";
+import CreateThread from "@/views/CreateThread";
 
 Vue.use(VueRouter);
 
@@ -27,6 +28,11 @@ const routes = [
     path: "/dashboard",
     name: "Dashboard",
     component: Dashboard,
+  },
+  {
+    path: "/createthread",
+    name: "CreateThread",
+    component: CreateThread,
   },
   {
     path: "/about",
