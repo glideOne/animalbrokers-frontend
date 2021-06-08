@@ -96,9 +96,17 @@
                   ><h5>Date and time of last sighting</h5>
                   </v-col>
                   <v-row justify="center">
-                    <v-date-picker v-model="lastSeenTime"></v-date-picker>
+                    <v-col cols="6">
+                      <v-date-picker v-model="lastSeenDate"></v-date-picker>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-time-picker
+                          format="24hr"
+                          v-model="lastSeenTime"
+                          scrollable
+                      ></v-time-picker>
+                    </v-col>
                   </v-row>
-
                 </v-col>
               </v-row>
 
@@ -180,7 +188,8 @@ export default {
       animalBreeds: [],
       title: "",
       petName: "",
-      lastSeenTime: "",
+      lastSeenDate: null,
+      lastSeenTime: null,
       lastKnownLocation: null,
       marker: {position: {lat: 10, lng: 10}},
       mapOptions: {
@@ -226,7 +235,7 @@ export default {
             breedId: this.animalBreed,
             lastKnownLocation: this.lastKnownLocation,
             //
-            lastSeenTime: this.lastSeenTime
+            lastSeenTime: this.computeDate()
           }, {
             headers: {
               'Authorization': localStorage.getItem('token')
@@ -236,6 +245,20 @@ export default {
       }).catch(error => {
         console.log(error)
       })
+    },
+
+    computeDate: function () {
+      let date = '';
+      if (this.lastSeenDate != null) {
+        date += this.lastSeenDate;
+
+        if (this.lastSeenTime != null) {
+          date += 'T' + this.lastSeenTime
+        } else {
+          date += 'T' + '00:00'
+        }
+      }
+      return date;
     },
 
     changedClass(animalClassId) {
