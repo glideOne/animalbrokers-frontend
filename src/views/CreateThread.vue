@@ -4,7 +4,7 @@
     <template>
       <form>
         <template>
-          <v-form>
+          <v-form ref="form">
             <v-container>
               <v-col>
                 <h2>Create New Thread</h2>
@@ -19,12 +19,17 @@
                       v-model="title"
                       :counter="160"
                       label="Thread title"
+                      :rules="titleRules"
                       required
                       validate-on-blur
                       solo-inverted
                   ></v-text-field>
 
                   <v-textarea
+                      v-model="description"
+                      :rules="descriptionRules"
+                      required
+                      validate-on-blur
                       name="input-7-1"
                       filled
                       label="Description"
@@ -33,7 +38,11 @@
                   ></v-textarea>
 
                   <v-select
+                      v-model="threadType"
                       :items="threadTypes"
+                      :rules="threadTypesRules"
+                      required
+                      validate-on-blur
                       item-text="id"
                       item-value="id"
                       label="Thread type"
@@ -44,6 +53,9 @@
 
                   <v-select
                       :items="animalClasses"
+                      :rules="animalClassRules"
+                      required
+                      validate-on-blur
                       item-text="name"
                       item-value="id"
                       label="Animal class"
@@ -54,7 +66,11 @@
                   ></v-select>
 
                   <v-select
+                      v-model="animalBreed"
                       :items="animalBreeds"
+                      :rules="animalBreedRules"
+                      required
+                      validate-on-blur
                       item-text="name"
                       item-value="id"
                       label="Animal breed"
@@ -80,7 +96,7 @@
                   ><h5>Date and time of last sighting</h5>
                   </v-col>
                   <v-row justify="center">
-                    <v-date-picker v-model="lastSeenDate"></v-date-picker>
+                    <v-date-picker v-model="lastSeenTime"></v-date-picker>
                   </v-row>
 
                 </v-col>
@@ -116,6 +132,8 @@
 
               <v-col style="">
                 <v-btn
+                    @click="createThread"
+                    class="btn btn-primary"
                     color="primary"
                     elevation="2"
                     large
@@ -139,13 +157,31 @@ export default {
 
   data() {
     return {
+      titleRules: [
+          v => !!v || 'Title is required'
+      ],
+      descriptionRules: [
+        v => !!v || 'Description is required'
+      ],
+      threadTypesRules: [
+        v => !!v || 'Thread type is required'
+      ],
+      animalClassRules: [
+        v => !!v || 'Animal class is required'
+      ],
+      animalBreedRules: [
+        v => !!v || 'Animal breed is required'
+      ],
+      threadType: "",
+      animalBreed: "",
+      description: "",
       threadTypes: [],
       animalClasses: [],
       animalBreeds: [],
       title: "",
       petName: "",
-      lastSeenDate: "",
-      lastKnownLocation: {latitude: 0, longitude: 0},
+      lastSeenTime: "",
+      lastKnownLocation: null,
       marker: {position: {lat: 10, lng: 10}},
       mapOptions: {
         disableDefaultUI: true,
@@ -176,6 +212,32 @@ export default {
       })
     },
 
+    createThread: function () {
+      if (!this.$refs.form.validate()) {
+        return;
+      }
+
+      this.$http.post('/api/v1/threads',
+          {
+            creatorId: JSON.parse(localStorage.getItem('user')).id,
+            title: this.title,
+            description: this.description,
+            type: this.threadType,
+            breedId: this.animalBreed,
+            lastKnownLocation: this.lastKnownLocation,
+            //
+            lastSeenTime: this.lastSeenTime
+          }, {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(function (response) {
+        console.log(response);
+      }).catch(error => {
+        console.log(error)
+      })
+    },
+
     changedClass(animalClassId) {
       this.$http.get('/api/v1/breeds?animalClassId=' + animalClassId,
           {
@@ -200,6 +262,7 @@ export default {
     //Moves the marker to click position on the map
     handleMapClick(e) {
       this.marker.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
+      this.lastKnownLocation = { latitude: e.latLng.lat(), longitude: e.latLng.lng()};
       console.log(e.latLng.lat());
       console.log(e.latLng.lng());
     },
