@@ -5,6 +5,7 @@ import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import Dashboard from "@/views/Dashboard";
 import CreateThread from "@/views/CreateThread";
+import Thread from "@/views/Thread";
 
 Vue.use(VueRouter);
 
@@ -33,6 +34,11 @@ const routes = [
     path: "/createthread",
     name: "CreateThread",
     component: CreateThread,
+  },
+  {
+    path: "/thread/:id",
+    name: "Thread",
+    component: Thread,
   },
   {
     path: "/about",
