@@ -85,11 +85,12 @@
                     cols="12"
                     sm="6"
                 >
-                  <v-text-field
-                      v-model="petName"
-                      label="Pet name"
-                      solo-inverted
-                  ></v-text-field>
+                  <v-file-input
+                      counter
+                      show-size
+                      truncate-length="12"
+                      v-model="photo"
+                  ></v-file-input>
 
                   <v-col
                       align="left"
@@ -166,7 +167,7 @@ export default {
   data() {
     return {
       titleRules: [
-          v => !!v || 'Title is required'
+        v => !!v || 'Title is required'
       ],
       descriptionRules: [
         v => !!v || 'Description is required'
@@ -194,7 +195,9 @@ export default {
       marker: {position: {lat: 10, lng: 10}},
       mapOptions: {
         disableDefaultUI: true,
-      }
+      },
+      photo: null,
+      photos: []
     }
   },
 
@@ -222,25 +225,29 @@ export default {
     },
 
     createThread: function () {
+      console.log(this.photo)
+
       if (!this.$refs.form.validate()) {
         return;
       }
-
-      this.$http.post('/api/v1/threads',
-          {
-            creatorId: JSON.parse(localStorage.getItem('user')).id,
-            title: this.title,
-            description: this.description,
-            type: this.threadType,
-            breedId: this.animalBreed,
-            lastKnownLocation: this.lastKnownLocation,
-            //
-            lastSeenTime: this.computeDate()
-          }, {
-            headers: {
-              'Authorization': localStorage.getItem('token')
-            }
-          }).then(function (response) {
+      this.convertPhotoToDto()
+          .then(() =>
+              this.$http.post('/api/v1/threads',
+                  {
+                    creatorId: JSON.parse(localStorage.getItem('user')).id,
+                    title: this.title,
+                    description: this.description,
+                    type: this.threadType,
+                    breedId: this.animalBreed,
+                    lastKnownLocation: this.lastKnownLocation,
+                    lastSeenTime: this.computeDate(),
+                    photos: this.photos
+                  }, {
+                    headers: {
+                      'Authorization': localStorage.getItem('token')
+                    }
+                  })
+          ).then(function (response) {
         console.log(response);
       }).catch(error => {
         console.log(error)
@@ -259,6 +266,35 @@ export default {
         }
       }
       return date;
+    },
+
+    async convertPhotoToDto() {
+      if (this.photo == null) {
+        return null;
+      }
+      this.photos.push({
+        "image": await this.readFile(this.photo)
+      })
+    },
+
+    readFile(file) {
+      return new Promise((resolve, reject) => {
+        let fr = new FileReader();
+        let byteArray = [];
+        fr.readAsArrayBuffer(file);
+
+        fr.onloadend = function (event) {
+          if (event.target.readyState === FileReader.DONE) {
+            let arrayBuffer = event.target.result;
+            let array = new Uint8Array(arrayBuffer);
+            for (let i = 0; i < array.length; i++) {
+              byteArray.push(array[i])
+            }
+            resolve(byteArray);
+          }
+        }
+        fr.onerror = reject;
+      })
     },
 
     changedClass(animalClassId) {
@@ -285,7 +321,7 @@ export default {
     //Moves the marker to click position on the map
     handleMapClick(e) {
       this.marker.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
-      this.lastKnownLocation = { latitude: e.latLng.lat(), longitude: e.latLng.lng()};
+      this.lastKnownLocation = {latitude: e.latLng.lat(), longitude: e.latLng.lng()};
       console.log(e.latLng.lat());
       console.log(e.latLng.lng());
     },
