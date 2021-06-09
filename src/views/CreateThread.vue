@@ -202,34 +202,29 @@ export default {
   },
 
   methods: {
-    getThreadTypes: function () {
+    getThreadTypes() {
       this.$http.get('/api/v1/threads/types',
           {
             headers: {
               'Authorization': localStorage.getItem('token')
             }
-          }).then(function (response) {
-        this.threadTypes = response.data
-      })
+          }).then(response => this.threadTypes = response.data)
     },
 
-    getAnimalClasses: function () {
+    getAnimalClasses() {
       this.$http.get('/api/v1/classes',
           {
             headers: {
               'Authorization': localStorage.getItem('token')
             }
-          }).then(function (response) {
-        this.animalClasses = response.data
-      })
+          }).then(response => this.animalClasses = response.data)
     },
 
-    createThread: function () {
-      console.log(this.photo)
-
+    createThread() {
       if (!this.$refs.form.validate()) {
         return;
       }
+
       this.convertPhotoToDto()
           .then(() =>
               this.$http.post('/api/v1/threads',
@@ -246,15 +241,12 @@ export default {
                     headers: {
                       'Authorization': localStorage.getItem('token')
                     }
-                  })
-          ).then(function (response) {
-        console.log(response);
-      }).catch(error => {
-        console.log(error)
-      })
+                  }))
+          .then(() => this.$router.push('/dashboard'))
+          .catch(error => console.log(error))
     },
 
-    computeDate: function () {
+    computeDate() {
       let date = '';
       if (this.lastSeenDate != null) {
         date += this.lastSeenDate;
@@ -283,7 +275,7 @@ export default {
         let byteArray = [];
         fr.readAsArrayBuffer(file);
 
-        fr.onloadend = function (event) {
+        fr.onloadend = event => {
           if (event.target.readyState === FileReader.DONE) {
             let arrayBuffer = event.target.result;
             let array = new Uint8Array(arrayBuffer);
@@ -303,9 +295,7 @@ export default {
             headers: {
               'Authorization': localStorage.getItem('token')
             }
-          }).then(function (response) {
-        this.animalBreeds = response.data
-      })
+          }).then(response => this.animalBreeds = response.data)
     },
 
     //sets the position of marker when dragged
