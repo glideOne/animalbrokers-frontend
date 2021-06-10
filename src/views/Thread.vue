@@ -25,7 +25,7 @@
             </v-card-text>
           </v-col>
 
-          <v-col>
+          <v-col v-if="hasLocation">
             <v-col align="left">
               <h6>Last known location:</h6>
             </v-col>
@@ -45,7 +45,7 @@
             </div>
           </v-col>
 
-          <v-col class="shrink" >
+          <v-col class="shrink" v-if="hasPhoto">
             <v-col align="left">
               <h6>Last known photo:</h6>
             </v-col>
@@ -85,11 +85,13 @@ export default {
     return {
       id: this.$route.params.id,
       thread: {},
-      image: "",
+      image: null,
       mapOptions: {
         disableDefaultUI: false,
       },
-      marker: {position: {lat: null, lng: null}}
+      marker: {position: null},
+      hasLocation: false,
+      hasPhoto: false
     }
   },
 
@@ -103,8 +105,12 @@ export default {
       }).then(response => {
         this.thread = response.data;
         this.image = 'data:image/jpeg;base64,' + this.thread.photos[0].image;
-        this.marker.position.lat = this.thread.lastKnownLocation.latitude;
-        this.marker.position.lng = this.thread.lastKnownLocation.longitude;
+        this.marker.position = {
+          lat: this.thread.lastKnownLocation.latitude,
+          lng: this.thread.lastKnownLocation.longitude
+        };
+        this.hasLocation = (this.marker.position != null);
+        this.hasPhoto = (this.thread.photos[0].image != null);
       })
     },
 
