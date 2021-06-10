@@ -1,13 +1,12 @@
 <template>
-  <div>
+  <div :key="componentKey">
 
     <v-app-bar dense>
       <h2>{{ thread.title }}</h2>
     </v-app-bar>
 
     <v-col>
-
-      <v-card elevation="11" outlined shaped tile style="text-align: left" margin-left="30px">
+      <v-card elevation="11" outlined shaped tile style="text-align: left">
         <v-row style="padding-bottom: 20px; padding-right: 30px;">
           <v-col>
             <v-card-title>
@@ -33,14 +32,16 @@
             <div>
               <GmapMap
                   ref="viewMapRef"
-                  :center="marker.position"
-                  :zoom="15"
+                  :center="mapCenter.position"
+                  :zoom="13"
                   :options="mapOptions"
                   map-type-id="terrain"
                   style="height: 200pt"
               >
                 <GmapMarker
-                    :position="marker.position"
+                    :position="m.position"
+                    :key="index"
+                    v-for="(m, index) in markers"
                 ></GmapMarker>
               </GmapMap>
             </div>
@@ -57,6 +58,37 @@
 
     </v-col>
 
+    <br/>
+    <v-col>
+      <v-row
+          :key="post.id"
+          v-for="post in this.thread.posts"
+          style="margin-left: 10px; margin-right: 10px;"
+      >
+        <v-card elevation="11" outlined shaped tile style="text-align: left">
+          <v-row style="padding-bottom: 20px; padding-right: 30px;">
+            <v-col>
+              <v-card-title style="font-size: 18px">
+                {{ post.poster.firstName }} {{ post.poster.lastName }}
+              </v-card-title>
+
+              <v-card-text>
+                {{ post.text }}
+              </v-card-text>
+            </v-col>
+
+            <v-col class="shrink" v-if="post.hasPhoto" style="margin-top: 20px">
+<!--                            <v-col align="left">-->
+<!--                              <h6>Last known photo:</h6>-->
+<!--                            </v-col>-->
+                            <v-img :src="post.photos[0].image" width="300" class="ml-3"></v-img>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-row>
+    </v-col>
+
+    <br/>
     <v-form ref="form">
       <v-row>
         <v-col sm="2"></v-col>
@@ -137,6 +169,7 @@ export default {
 
   data() {
     return {
+      componentKey: 1,
       postRules: [
         v => !!v || 'Field is required'
       ],
@@ -146,7 +179,8 @@ export default {
       mapOptions: {
         disableDefaultUI: false,
       },
-      marker: {position: null},
+      mapCenter: {position: {lat:46.7712, lng:23.6236}},
+      markers: [],
       newMarker: {position: null},
       lastKnownLocation: null,
       photo: null,
@@ -174,15 +208,16 @@ export default {
                     photos: this.photos,
                     spottedAt: this.lastKnownLocation
                   }, {
-                headers: {
-                  'Authorization': localStorage.getItem('token')
-                }
-                }))
-      .then(() => this.$router.push("/thread/" + this.thread.id))
-      .catch(error => console.log(error))
+                    headers: {
+                      'Authorization': localStorage.getItem('token')
+                    }
+                  }))
+          // .then(() => this.$router.push("/thread/" + this.thread.id))
+          .then(response => this.thread.posts.push(response.data))
+          .catch(error => console.log(error))
     },
 
-    async convertPhotoToDto(){
+    async convertPhotoToDto() {
       if (this.photo == null) {
         return null;
       }
@@ -218,13 +253,21 @@ export default {
         }
       }).then(response => {
         this.thread = response.data;
-        this.image = 'data:image/jpeg;base64,' + this.thread.photos[0].image;
-        this.marker.position = {
-          lat: this.thread.lastKnownLocation.latitude,
-          lng: this.thread.lastKnownLocation.longitude
-        };
-        this.hasLocation = (this.marker.position != null);
-        this.hasPhoto = (this.thread.photos[0].image != null);
+        if (this.thread.photos != null && this.thread.photos.length > 0) {
+          this.image = 'data:image/jpeg;base64,' + this.thread.photos[0].image;
+          this.hasPhoto = true;
+        }
+        if (this.thread.lastKnownLocation != null) {
+          this.mapCenter = {
+            position: {
+              lat: this.thread.lastKnownLocation.latitude,
+              lng: this.thread.lastKnownLocation.longitude
+            }
+          };
+          this.markers.push(this.mapCenter);
+          this.hasLocation = true;
+        }
+        this.computePostFields(this.thread.posts);
       })
     },
 
@@ -242,8 +285,28 @@ export default {
     handleMapClick(e) {
       this.newMarker.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
       this.lastKnownLocation = {latitude: e.latLng.lat(), longitude: e.latLng.lng()};
-      console.log(e.latLng.lat());
-      console.log(e.latLng.lng());
+    },
+
+    computePostFields(posts) {
+      if (posts == null) {
+        return;
+      }
+      for (let i = 0; i < posts.length; i++) {
+        if (posts[i].spottedAt != null) {
+          this.mapCenter = {
+            position: {
+              lat: posts[i].spottedAt.latitude,
+              lng: posts[i].spottedAt.longitude
+            }
+          };
+          this.markers.push(this.mapCenter);
+          this.hasLocation = true;
+        }
+        if (posts[i].photos != null && posts[i].photos.length > 0) {
+          posts[i].hasPhoto = true;
+          posts[i].photos[0].image = 'data:image/jpeg;base64,' + posts[i].photos[0].image;
+        }
+      }
     },
 
   },

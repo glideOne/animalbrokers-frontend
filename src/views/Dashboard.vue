@@ -13,7 +13,7 @@
         <v-data-table
             :headers="headers"
             :items="lostThreads"
-            :items-per-page="5"
+            :items-per-page="10"
             class="elevation-1"
             @click:row="handleClick"
         >
@@ -33,7 +33,7 @@
         <v-data-table
             :headers="headers"
             :items="foundThreads"
-            :items-per-page="5"
+            :items-per-page="10"
             class="elevation-1"
             @click:row="handleClick"
         >
@@ -53,7 +53,7 @@
         <v-data-table
             :headers="headers"
             :items="otherThreads"
-            :items-per-page="5"
+            :items-per-page="10"
             class="elevation-1"
             @click:row="handleClick"
         >
