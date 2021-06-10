@@ -60,6 +60,9 @@
           <template #item.creatorName="{ item }">
             {{ item.creator.firstName }} {{ item.creator.lastName }}
           </template>
+          <template #item.shortDescription="{ item }">
+            {{ item.shortDescription }}
+          </template>
         </v-data-table>
 
       </v-col>
@@ -91,7 +94,7 @@ export default {
       headers: [
         {text: 'Title', value: 'title'},
         {text: 'Creator', value: 'creatorName'},
-        {text: 'Description', value: 'description'}
+        {text: 'Description', value: 'shortDescription'}
       ],
 
     }
@@ -107,7 +110,11 @@ export default {
             headers: {
               'Authorization': localStorage.getItem('token')
             }
-          }).then(response => this.lostThreads = response.data)
+          })
+          .then(response => {
+            this.lostThreads = response.data;
+            this.shortenDescription(this.lostThreads);
+          })
     },
 
     searchFoundThreads() {
@@ -119,7 +126,11 @@ export default {
             headers: {
               'Authorization': localStorage.getItem('token')
             }
-          }).then(response => this.foundThreads = response.data)
+          })
+          .then(response => {
+            this.foundThreads = response.data;
+            this.shortenDescription(this.foundThreads);
+          })
     },
 
     searchOtherThreads() {
@@ -131,12 +142,35 @@ export default {
             headers: {
               'Authorization': localStorage.getItem('token')
             }
-          }).then(response => this.otherThreads = response.data)
+          })
+          .then(response => {
+            this.otherThreads = response.data;
+            this.shortenDescription(this.otherThreads);
+          })
     },
 
     handleClick(thread) {
       this.$router.push("/thread/" + thread.id)
-    }
+    },
+
+    shortenDescription(threads) {
+      if (threads == null) {
+        return;
+      }
+      for (let i = 0; i < threads.length; i++) {
+        threads[i].shortDescription = this.trimText(threads[i].description);
+      }
+    },
+
+    trimText(text) {
+      if (text == null) {
+        return "";
+      }
+      if (text.length < 50) {
+        return text;
+      }
+      return text.substr(0, 50) + '...';
+    },
 
   },
 
