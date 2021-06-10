@@ -11,8 +11,8 @@ Vue.config.productionTip = false;
 
 Vue.use(VueGoogleMaps, {
   load: {
-    key: '',
-    libraries: 'places'
+    key: 'AIzaSyAP6ZWfkpeydLqVfgq8LXF-6RKMobxLP84',
+    libraries: 'places,drawing,visualization'
   },
   installComponents: true,
 })
