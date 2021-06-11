@@ -72,9 +72,36 @@
                 {{ post.poster.firstName }} {{ post.poster.lastName }}
               </v-card-title>
 
+              <v-card-subtitle>
+                {{post.created.replace('T', ' ').substring(0, 16)}}
+              </v-card-subtitle>
+
               <v-card-text>
                 {{ post.text }}
               </v-card-text>
+
+              <v-card-actions>
+                <v-btn color="primary" text x-small dark
+                       @click.stop="dialog = true"
+                >
+                  Delete
+                </v-btn>
+
+                <v-dialog
+                    v-model="dialog"
+                    max-width="290"
+                >
+                  <v-card>
+                    <v-card-title class="text-h5" style="text-align: left">Delete post?</v-card-title>
+                    <v-card-text style="text-align: left">Are you sure you want to delete the post?</v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn color="green darken-1" text @click="dialog = false">Cancel</v-btn>
+                      <v-btn color="green darken-1" text @click="dialog = false, deletePost(post.id)">Delete</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-card-actions>
             </v-col>
 
             <v-col class="shrink" v-if="post.hasPhoto" style="margin-top: 20px">
@@ -187,11 +214,21 @@ export default {
       photos: [],
       post: "",
       hasLocation: false,
-      hasPhoto: false
+      hasPhoto: false,
+      dialog: null
     }
   },
 
   methods: {
+
+    deletePost(id) {
+      console.log()
+      this.$http.delete('/api/v1/posts/' + id, {
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        }})
+      .then(() => this.$router.go(0))
+    },
 
     addPost() {
       if (!this.$refs.form.validate()) {
