@@ -18,6 +18,18 @@
 
       </div>
 
+      <v-col></v-col>
+
+      <v-btn v-if="shouldShowUsersManagement()"
+          color="white"
+          elevation="4"
+          outlined
+          text
+          small
+          to="/usersmanagement"
+      >Users Management
+      </v-btn>
+
       <v-spacer></v-spacer>
 
       <v-btn
@@ -54,9 +66,22 @@
 export default {
   name: 'App',
 
-  data: () => ({
-    //
-  }),
+  data() {
+    return {
+
+    }
+  },
+
+  methods: {
+    shouldShowUsersManagement() {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      if (currentUser === null) {
+        return false;
+      }
+      return currentUser.role === 'ADMIN';
+    }
+  }
+
 };
 </script>
 
