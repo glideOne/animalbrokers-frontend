@@ -54,11 +54,35 @@
             <v-img :src="image" width="300" class="ml-3"></v-img>
           </v-col>
         </v-row>
+
+        <v-card-actions v-if="shouldShowThreadDeleteButton(thread)">
+          <v-btn color="primary" text x-small dark
+                 @click.stop="threadDialog = true"
+          >
+            Delete
+          </v-btn>
+
+          <v-dialog
+              v-model="threadDialog"
+              max-width="290"
+          >
+            <v-card>
+              <v-card-title class="text-h6" style="text-align: left">Delete thread</v-card-title>
+              <v-card-text style="text-align: left">Are you sure you want to delete the thread?</v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="threadDialog = false">Cancel</v-btn>
+                <v-btn color="primary" text @click="threadDialog = false, deleteThread(thread.id)">Delete</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-card-actions>
       </v-card>
 
     </v-col>
 
     <br/>
+
     <v-col>
       <v-row
           :key="post.id"
@@ -80,7 +104,7 @@
                 {{ post.text }}
               </v-card-text>
 
-              <v-card-actions>
+              <v-card-actions v-if="shouldShowPostDeleteButton(post)">
                 <v-btn color="primary" text x-small dark
                        @click.stop="dialog = true"
                 >
@@ -92,12 +116,12 @@
                     max-width="290"
                 >
                   <v-card>
-                    <v-card-title class="text-h5" style="text-align: left">Delete post?</v-card-title>
+                    <v-card-title class="text-h6" style="text-align: left">Delete post</v-card-title>
                     <v-card-text style="text-align: left">Are you sure you want to delete the post?</v-card-text>
                     <v-card-actions>
                       <v-spacer></v-spacer>
-                      <v-btn color="green darken-1" text @click="dialog = false">Cancel</v-btn>
-                      <v-btn color="green darken-1" text @click="dialog = false, deletePost(post.id)">Delete</v-btn>
+                      <v-btn color="primary" text @click="dialog = false">Cancel</v-btn>
+                      <v-btn color="primary" text @click="dialog = false, deletePost(post.id)">Delete</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -215,19 +239,27 @@ export default {
       post: "",
       hasLocation: false,
       hasPhoto: false,
-      dialog: null
+      dialog: null,
+      threadDialog: null
     }
   },
 
   methods: {
 
     deletePost(id) {
-      console.log()
       this.$http.delete('/api/v1/posts/' + id, {
         headers: {
           'Authorization': localStorage.getItem('token')
         }})
       .then(() => this.$router.go(0))
+    },
+
+    deleteThread(id) {
+      this.$http.delete('/api/v1/threads/' + id, {
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        }})
+      .then(() => this.$router.push('/dashboard'))
     },
 
     addPost() {
@@ -249,8 +281,7 @@ export default {
                       'Authorization': localStorage.getItem('token')
                     }
                   }))
-          // .then(() => this.$router.push("/thread/" + this.thread.id))
-          .then(response => this.thread.posts.push(response.data))
+          .then(() => this.$router.go(0))
           .catch(error => console.log(error))
     },
 
@@ -344,6 +375,18 @@ export default {
           posts[i].photos[0].image = 'data:image/jpeg;base64,' + posts[i].photos[0].image;
         }
       }
+    },
+
+    shouldShowPostDeleteButton(post) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      let poster = post.poster;
+      return currentUser.role === 'ADMIN' || currentUser.id === poster.id;
+    },
+
+    shouldShowThreadDeleteButton(thread) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      let creator = thread.creator;
+      return currentUser.role === 'ADMIN' || currentUser.id === creator.id;
     },
 
   },

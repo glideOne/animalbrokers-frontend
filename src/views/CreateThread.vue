@@ -94,7 +94,7 @@
 
                   <v-col
                       align="left"
-                  ><h5>Date and time of last sighting</h5>
+                  ><h5>Date and time of last sighting:</h5>
                   </v-col>
                   <v-row justify="center">
                     <v-col cols="6">
