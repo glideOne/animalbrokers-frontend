@@ -1,42 +1,64 @@
 <template>
-  <div id="app">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">Animal Brokers</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">About</a>
-            </li>
-<!--            <li class="nav-item">-->
-<!--              <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>-->
-<!--            </li>-->
-          </ul>
-          <form class="d-flex">
-<!--            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">-->
-<!--            <router-link class="nav-link" to="/login">Login</router-link>-->
-            <router-link class="btn btn-outline-primary" to="/login">Login</router-link>
-            <div style="width: 5pt"></div>
-            <router-link class="btn btn-outline-primary" to="/register">Register</router-link>
-          </form>
-        </div>
+  <v-app>
+    <v-app-bar
+        app
+        color="primary">
+
+      <div class="d-flex align-center">
+        <v-img
+            alt="Vuetify Logo"
+            class="shrink mr-2"
+            contain
+            src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
+            transition="scale-transition"
+            width="40"
+        />
+
+        <div style="font-size: 20pt">Animal Brokers</div>
+
       </div>
-    </nav>
-    <br>
-    <!--    <div id="nav">-->
-    <!--      <router-link to="/">Home</router-link> |-->
-    <!--      <router-link to="/about">About</router-link>-->
-    <!--    </div>-->
-    <router-view/>
-  </div>
+
+      <v-spacer></v-spacer>
+
+      <v-btn
+          color="white"
+          elevation="4"
+          outlined
+          text
+          small
+          to="/login"
+      >Login
+      </v-btn>
+
+      <div style="width: 5pt"></div>
+
+      <v-btn
+          color="white"
+          elevation="4"
+          outlined
+          text
+          small
+          to="/register"
+      >Register
+      </v-btn>
+    </v-app-bar>
+
+    <v-main>
+      <router-view/>
+    </v-main>
+  </v-app>
 </template>
+
+<script>
+
+export default {
+  name: 'App',
+
+  data: () => ({
+    //
+  }),
+};
+</script>
 
 <style>
 #app {
@@ -50,13 +72,5 @@
 #nav {
   padding: 30px;
 }
-
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
-}
 </style>
+
