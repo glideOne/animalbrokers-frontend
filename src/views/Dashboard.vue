@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" style="margin-bottom: 100px;">
     <br>
     <h1>Dashboard</h1>
 
@@ -75,6 +75,7 @@
         absolute
         left
         to="/createthread"
+        v-if="isLoggedInUserActive()"
     >Create new thread
     </v-btn>
   </div>
@@ -171,6 +172,14 @@ export default {
       }
       return text.substr(0, 50) + '...';
     },
+
+    isLoggedInUserActive() {
+      let user = localStorage.getItem('user');
+      if (user === null) {
+        return false;
+      }
+      return JSON.parse(user).active;
+    }
 
   },
 

@@ -140,7 +140,7 @@
     </v-col>
 
     <br/>
-    <v-form ref="form">
+    <v-form ref="form" v-if="isLoggedInUserActive()">
       <v-row>
         <v-col sm="2"></v-col>
 
@@ -380,14 +380,22 @@ export default {
     shouldShowPostDeleteButton(post) {
       let currentUser = JSON.parse(localStorage.getItem('user'));
       let poster = post.poster;
-      return currentUser.role === 'ADMIN' || currentUser.id === poster.id;
+      return currentUser.role === 'ADMIN' || (currentUser.id === poster.id && currentUser.active === true);
     },
 
     shouldShowThreadDeleteButton(thread) {
       let currentUser = JSON.parse(localStorage.getItem('user'));
       let creator = thread.creator;
-      return currentUser.role === 'ADMIN' || currentUser.id === creator.id;
+      return currentUser.role === 'ADMIN' || (currentUser.id === creator.id && currentUser.active === true);
     },
+
+    isLoggedInUserActive() {
+      let user = localStorage.getItem('user');
+      if (user === null) {
+        return false;
+      }
+      return JSON.parse(user).active;
+    }
 
   },
 
