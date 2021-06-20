@@ -1,7 +1,7 @@
 <template>
-  <div :key="componentKey">
+  <v-container :key="componentKey">
 
-    <v-app-bar dense>
+    <v-app-bar dense style="padding-top: 7px; height: 55px">
       <h2>{{ thread.title }}</h2>
     </v-app-bar>
 
@@ -211,7 +211,7 @@
     </v-form>
 
 
-  </div>
+  </v-container>
 </template>
 
 <script>

@@ -1,163 +1,250 @@
 <template>
-  <div>
+  <v-container>
+    <v-row style="padding-top: 10px">
+      <v-col>
+        <h2>Create New Thread</h2>
+      </v-col>
+    </v-row>
 
-    <template>
-      <form>
-        <template>
-          <v-form ref="form">
-            <v-container>
-              <v-col>
-                <h2>Create New Thread</h2>
+    <v-form ref="form">
+      <v-container>
+        <v-row>
+          <v-col
+              cols="12"
+              sm="6"
+          >
+            <v-text-field
+                v-model="title"
+                :counter="160"
+                label="Thread title"
+                :rules="titleRules"
+                required
+                validate-on-blur
+                solo-inverted
+            ></v-text-field>
+
+            <v-textarea
+                v-model="description"
+                :rules="descriptionRules"
+                required
+                validate-on-blur
+                name="input-7-1"
+                filled
+                label="Description"
+                auto-grow
+                placeholder="Type in all the details of your post here..."
+            ></v-textarea>
+
+            <v-select
+                v-model="threadType"
+                :items="threadTypes"
+                :rules="threadTypesRules"
+                required
+                validate-on-blur
+                item-text="id"
+                item-value="id"
+                label="Thread type"
+                auto
+                single-line
+                solo
+            ></v-select>
+
+            <div style="height: 82px">
+              <v-select
+                  v-model="animalClass"
+                  :items="animalClasses"
+                  :rules="animalClassRules"
+                  required
+                  validate-on-blur
+                  item-text="name"
+                  item-value="id"
+                  label="Animal class"
+                  @input="changedClass"
+                  auto
+                  single-line
+                  solo
+                  style="width: 90%; float:left; display: inline-block"
+              ></v-select>
+              <v-btn fab text
+                     color="primary"
+                     width="40"
+                     @click="newAnimalClass.dialog = true">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </div>
+
+            <div style="height: 82px">
+              <v-select
+                  v-model="animalBreed"
+                  :items="animalBreeds"
+                  :rules="animalBreedRules"
+                  required
+                  validate-on-blur
+                  item-text="name"
+                  item-value="id"
+                  label="Animal breed"
+                  auto
+                  single-line
+                  solo
+                  style="width: 90%; float:left; display: inline-block"
+              ></v-select>
+              <v-btn fab text
+                     color="primary"
+                     width="40"
+                     :disabled="animalClass === null"
+                     @click="newAnimalBreed.dialog = true">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </div>
+
+          </v-col>
+
+          <v-col
+              cols="12"
+              sm="6"
+          >
+            <v-file-input
+                counter
+                show-size
+                truncate-length="12"
+                v-model="photo"
+            ></v-file-input>
+
+            <v-col
+                align="left"
+            ><h5>Date and time of last sighting:</h5>
+            </v-col>
+            <v-row justify="center">
+              <v-col cols="6">
+                <v-date-picker v-model="lastSeenDate"></v-date-picker>
               </v-col>
-
-              <v-row>
-                <v-col
-                    cols="12"
-                    sm="6"
-                >
-                  <v-text-field
-                      v-model="title"
-                      :counter="160"
-                      label="Thread title"
-                      :rules="titleRules"
-                      required
-                      validate-on-blur
-                      solo-inverted
-                  ></v-text-field>
-
-                  <v-textarea
-                      v-model="description"
-                      :rules="descriptionRules"
-                      required
-                      validate-on-blur
-                      name="input-7-1"
-                      filled
-                      label="Description"
-                      auto-grow
-                      placeholder="Type in all the details of your post here..."
-                  ></v-textarea>
-
-                  <v-select
-                      v-model="threadType"
-                      :items="threadTypes"
-                      :rules="threadTypesRules"
-                      required
-                      validate-on-blur
-                      item-text="id"
-                      item-value="id"
-                      label="Thread type"
-                      auto
-                      single-line
-                      solo
-                  ></v-select>
-
-                  <v-select
-                      :items="animalClasses"
-                      :rules="animalClassRules"
-                      required
-                      validate-on-blur
-                      item-text="name"
-                      item-value="id"
-                      label="Animal class"
-                      @input="changedClass"
-                      auto
-                      single-line
-                      solo
-                  ></v-select>
-
-                  <v-select
-                      v-model="animalBreed"
-                      :items="animalBreeds"
-                      :rules="animalBreedRules"
-                      required
-                      validate-on-blur
-                      item-text="name"
-                      item-value="id"
-                      label="Animal breed"
-                      auto
-                      single-line
-                      solo
-                  ></v-select>
-
-                </v-col>
-
-                <v-col
-                    cols="12"
-                    sm="6"
-                >
-                  <v-file-input
-                      counter
-                      show-size
-                      truncate-length="12"
-                      v-model="photo"
-                  ></v-file-input>
-
-                  <v-col
-                      align="left"
-                  ><h5>Date and time of last sighting:</h5>
-                  </v-col>
-                  <v-row justify="center">
-                    <v-col cols="6">
-                      <v-date-picker v-model="lastSeenDate"></v-date-picker>
-                    </v-col>
-                    <v-col cols="6">
-                      <v-time-picker
-                          format="24hr"
-                          v-model="lastSeenTime"
-                          scrollable
-                      ></v-time-picker>
-                    </v-col>
-                  </v-row>
-                </v-col>
-              </v-row>
-
-              <v-row>
-                <v-col
-                    align="left"
-                ><h5>Last known location:</h5>
-                </v-col>
-                <div>
-                  <GmapMap
-                      ref="mapRef"
-                      :center="{lat:46.7712, lng:23.6236}"
-                      :zoom="12"
-                      :options="mapOptions"
-                      map-type-id="terrain"
-                      style="height: 350pt"
-                      @click="handleMapClick"
-                  >n
-                    <GmapMarker
-                        :position="marker.position"
-                        :clickable="true"
-                        :draggable="true"
-                        @drag="handleMarkerDrag"
-                        @click="panToMarker"
-                    />
-                  </GmapMap>
-                </div>
-              </v-row>
-
-              <v-col></v-col>
-
-              <v-col style="">
-                <v-btn
-                    @click="createThread"
-                    class="btn btn-primary"
-                    color="primary"
-                    elevation="2"
-                    large
-                    x-large
-                >Create thread
-                </v-btn>
+              <v-col cols="6">
+                <v-time-picker
+                    format="24hr"
+                    v-model="lastSeenTime"
+                    scrollable
+                ></v-time-picker>
               </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
 
-            </v-container>
+        <v-row>
+          <v-col
+              align="left"
+          ><h5>Last known location:</h5>
+          </v-col>
+          <div>
+            <GmapMap
+                ref="mapRef"
+                :center="{lat:46.7712, lng:23.6236}"
+                :zoom="12"
+                :options="mapOptions"
+                map-type-id="terrain"
+                style="height: 350pt"
+                @click="handleMapClick"
+            >n
+              <GmapMarker
+                  :position="marker.position"
+                  :clickable="true"
+                  :draggable="true"
+                  @drag="handleMarkerDrag"
+                  @click="panToMarker"
+              />
+            </GmapMap>
+          </div>
+        </v-row>
+
+        <v-col></v-col>
+
+        <v-col style="">
+          <v-btn
+              @click="createThread"
+              class="btn btn-primary"
+              color="primary"
+              elevation="2"
+              large
+              x-large
+          >Create thread
+          </v-btn>
+        </v-col>
+
+      </v-container>
+    </v-form>
+
+    <v-dialog
+        v-model="newAnimalClass.dialog"
+        persistent
+        width="500"
+    >
+      <v-card>
+        <v-card-title class="text-h6 primary lighten-2">
+          Create Animal Class
+        </v-card-title>
+        <v-container>
+          <v-form ref="createAnimalClassForm">
+            <v-text-field
+                prepend-icon="mdi-dog-side"
+                v-model="newAnimalClass.name"
+                label="Animal Class Name"
+                clearable
+                counter="64"
+                :rules="nameRules"
+            ></v-text-field>
           </v-form>
-        </template>
-      </form>
-    </template>
+          <div v-if="newAnimalClass.error != null" style="margin-top: 10px; color: red; font-size: 14px">
+            {{ newAnimalClass.error }}
+          </div>
+        </v-container>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="newAnimalClass.dialog = false">
+            Cancel
+          </v-btn>
+          <v-btn color="primary" text @click="createAnimalClass()">
+            Save
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
-  </div>
+    <v-dialog
+        v-model="newAnimalBreed.dialog"
+        persistent
+        width="500"
+    >
+      <v-card>
+        <v-card-title class="text-h6 primary lighten-2">
+          Create Animal Breed
+        </v-card-title>
+        <v-container>
+          <v-form ref="createAnimalBreedForm">
+            <v-text-field
+                prepend-icon="mdi-dog-side"
+                v-model="newAnimalBreed.name"
+                label="Animal Breed Name"
+                clearable
+                counter="64"
+                :rules="nameRules"
+            ></v-text-field>
+          </v-form>
+          <div v-if="newAnimalBreed.error != null" style="margin-top: 10px; color: red; font-size: 14px">
+            {{ newAnimalBreed.error }}
+          </div>
+        </v-container>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="newAnimalBreed.dialog = false">
+            Cancel
+          </v-btn>
+          <v-btn color="primary" text @click="createAnimalBreed()">
+            Save
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+  </v-container>
 </template>
 
 <script>
@@ -182,7 +269,6 @@ export default {
         v => !!v || 'Animal breed is required'
       ],
       threadType: "",
-      animalBreed: "",
       description: "",
       threadTypes: [],
       animalClasses: [],
@@ -197,7 +283,23 @@ export default {
         disableDefaultUI: true,
       },
       photo: null,
-      photos: []
+      photos: [],
+      newAnimalClass: {
+        dialog: false,
+        name: null,
+        error: null
+      },
+      animalClass: null,
+      newAnimalBreed: {
+        dialog: false,
+        name: null,
+        error: null
+      },
+      animalBreed: null,
+      nameRules: [
+        v => !!v || 'Name is required',
+        v => !!v && v.length <= 64 || 'Name must be less than 64 characters',
+      ],
     }
   },
 
@@ -233,7 +335,7 @@ export default {
                     title: this.title,
                     description: this.description,
                     type: this.threadType,
-                    breedId: this.animalBreed,
+                    breedId: this.animalBreed.id,
                     lastKnownLocation: this.lastKnownLocation,
                     lastSeenTime: this.computeDate(),
                     photos: this.photos
@@ -315,6 +417,49 @@ export default {
       console.log(e.latLng.lat());
       console.log(e.latLng.lng());
     },
+
+    createAnimalClass() {
+      if (!this.$refs.createAnimalClassForm.validate()) {
+        return;
+      }
+      this.$http.post('/api/v1/classes',
+          {
+            name: this.newAnimalClass.name
+          }, {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          })
+          .then(response => {
+            this.newAnimalClass.dialog = false;
+            this.getAnimalClasses();
+            this.animalClass = response.data;
+            this.$refs.createAnimalClassForm.validate();
+          })
+          .catch(error => this.newAnimalClass.error = error.body.message)
+    },
+
+    createAnimalBreed() {
+      if (!this.$refs.createAnimalBreedForm.validate()) {
+        return;
+      }
+      this.$http.post('/api/v1/breeds',
+          {
+            name: this.newAnimalBreed.name,
+            animalClassId: this.animalClass
+          }, {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          })
+          .then(response => {
+            this.newAnimalBreed.dialog = false;
+            this.changedClass(this.animalClass);
+            this.animalBreed = response.data;
+            this.$refs.createAnimalBreedForm.validate(); // todo: investiugate
+          })
+          .catch(error => this.newAnimalBreed.error = error.body.message)
+    }
 
   },
 

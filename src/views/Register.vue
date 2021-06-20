@@ -1,8 +1,11 @@
 <template>
-  <div class="container">
-    <br>
-    <h1>Animal Brokers - Create account</h1>
-    <br>
+  <v-container>
+    <v-row style="padding-top: 10px">
+      <v-col>
+        <h2>Animal Brokers - Create account</h2>
+      </v-col>
+    </v-row>
+
     <div class="row">
       <div class="col-md-3"></div>
       <div class="col-md-6">
@@ -54,7 +57,7 @@
       </div>
       <div class="col-md-3"></div>
     </div>
-  </div>
+  </v-container>
 </template>
 
 <script>
