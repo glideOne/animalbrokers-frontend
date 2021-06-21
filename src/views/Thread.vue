@@ -1,6 +1,5 @@
 <template>
   <v-container :key="componentKey">
-
     <v-app-bar dense style="padding-top: 7px; height: 55px">
       <h2>{{ thread.title }}</h2>
     </v-app-bar>
@@ -55,15 +54,22 @@
           </v-col>
         </v-row>
 
-        <v-card-actions v-if="shouldShowThreadDeleteButton(thread)">
-          <v-btn color="primary" text x-small dark
-                 @click.stop="threadDialog = true"
+        <v-card-actions>
+          <v-btn v-if="shouldShowThreadEditButton(thread)"
+                 color="primary" text x-small dark
+                 @click.stop="loadEditThreadDialog(thread)"
+          >
+            Edit
+          </v-btn>
+          <v-btn v-if="shouldShowThreadDeleteButton(thread)"
+                 color="primary" text x-small dark
+                 @click.stop="threadDeleteDialog = true"
           >
             Delete
           </v-btn>
 
           <v-dialog
-              v-model="threadDialog"
+              v-model="threadDeleteDialog"
               max-width="290"
           >
             <v-card>
@@ -71,8 +77,78 @@
               <v-card-text style="text-align: left">Are you sure you want to delete the thread?</v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="threadDialog = false">Cancel</v-btn>
-                <v-btn color="primary" text @click="threadDialog = false, deleteThread(thread.id)">Delete</v-btn>
+                <v-btn color="primary" text @click="threadDeleteDialog = false">Cancel</v-btn>
+                <v-btn color="primary" text @click="threadDeleteDialog = false, deleteThread(thread.id)">Delete</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <v-dialog
+              v-model="threadEditDialog"
+              max-width="800"
+          >
+            <v-card>
+              <v-card-title class="text-h6" style="text-align: left">Edit thread</v-card-title>
+              <v-card-text>
+                <v-form ref="threadEditForm">
+                  <v-text-field
+                      v-model="threadEditInput.title"
+                      :counter="160"
+                      label="Thread title"
+                      :rules="titleRules"
+                      required
+                      validate-on-blur
+                      solo-inverted
+                  ></v-text-field>
+
+                  <v-textarea
+                      v-model="threadEditInput.description"
+                      :rules="descriptionRules"
+                      required
+                      validate-on-blur
+                      filled
+                      label="Description"
+                      auto-grow
+                      placeholder="Type in all the details of your post here..."
+                  ></v-textarea>
+
+                  <v-select
+                      v-model="threadEditInput.type"
+                      :items="threadTypes"
+                      validate-on-blur
+                      item-text="id"
+                      item-value="id"
+                      label="Thread type"
+                  ></v-select>
+                  <v-row>
+                    <v-select
+                        v-model="threadEditInput.animalClass"
+                        :items="animalClasses"
+                        validate-on-blur
+                        item-text="name"
+                        item-value="id"
+                        label="Animal class"
+                        @input="getAnimalBreeds"
+                        style="width: 50%; float:left; display: inline-block; padding-right: 10px"
+                    ></v-select>
+
+                    <v-select
+                        v-model="threadEditInput.animalBreed"
+                        :items="animalBreeds"
+                        :rules="animalBreedRules"
+                        validate-on-blur
+                        item-text="name"
+                        item-value="id"
+                        label="Animal breed"
+                        style="width: 50%; float:left; display: inline-block; padding-left: 10px"
+                    ></v-select>
+                  </v-row>
+                </v-form>
+
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="threadEditDialog = false">Cancel</v-btn>
+                <v-btn color="primary" text @click="threadEditDialog = false, editThread(thread.id)">Save</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -97,22 +173,29 @@
               </v-card-title>
 
               <v-card-subtitle>
-                {{post.created.replace('T', ' ').substring(0, 16)}}
+                {{ post.created.replace('T', ' ').substring(0, 16) }}
               </v-card-subtitle>
 
               <v-card-text>
                 {{ post.text }}
               </v-card-text>
 
-              <v-card-actions v-if="shouldShowPostDeleteButton(post)">
-                <v-btn color="primary" text x-small dark
-                       @click.stop="dialog = true"
+              <v-card-actions>
+                <v-btn v-if="shouldShowPostEditButton(post)"
+                       color="primary" text x-small dark
+                       @click.stop="postEditDialog = true"
+                >
+                  Edit
+                </v-btn>
+                <v-btn v-if="shouldShowPostDeleteButton(post)"
+                       color="primary" text x-small dark
+                       @click.stop="postDeleteDialog = true"
                 >
                   Delete
                 </v-btn>
 
                 <v-dialog
-                    v-model="dialog"
+                    v-model="postDeleteDialog"
                     max-width="290"
                 >
                   <v-card>
@@ -120,8 +203,25 @@
                     <v-card-text style="text-align: left">Are you sure you want to delete the post?</v-card-text>
                     <v-card-actions>
                       <v-spacer></v-spacer>
-                      <v-btn color="primary" text @click="dialog = false">Cancel</v-btn>
-                      <v-btn color="primary" text @click="dialog = false, deletePost(post.id)">Delete</v-btn>
+                      <v-btn color="primary" text @click="postDeleteDialog = false">Cancel</v-btn>
+                      <v-btn color="primary" text @click="postDeleteDialog = false, deletePost(post.id)">Delete</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+
+                <v-dialog
+                    v-model="postEditDialog"
+                    max-width="600"
+                >
+                  <v-card>
+                    <v-card-title class="text-h6" style="text-align: left">Edit post</v-card-title>
+                    <v-card-text>
+
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn color="primary" text @click="postEditDialog = false">Cancel</v-btn>
+                      <v-btn color="primary" text @click="postEditDialog = false, editPost(post.id)">Save</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -129,10 +229,10 @@
             </v-col>
 
             <v-col class="shrink" v-if="post.hasPhoto" style="margin-top: 20px">
-<!--                            <v-col align="left">-->
-<!--                              <h6>Last known photo:</h6>-->
-<!--                            </v-col>-->
-                            <v-img :src="post.photos[0].image" width="300" class="ml-3"></v-img>
+              <!--                            <v-col align="left">-->
+              <!--                              <h6>Last known photo:</h6>-->
+              <!--                            </v-col>-->
+              <v-img :src="post.photos[0].image" width="300" class="ml-3"></v-img>
             </v-col>
           </v-row>
         </v-card>
@@ -143,10 +243,7 @@
     <v-form ref="form" v-if="isLoggedInUserActive()">
       <v-row>
         <v-col sm="2"></v-col>
-
-        <v-col
-            sm="4"
-        >
+        <v-col sm="4">
           <v-textarea
               v-model="post"
               :rules="postRules"
@@ -159,7 +256,6 @@
               height="250px"
               placeholder="Add a comment to this thread here..."
           ></v-textarea>
-
         </v-col>
 
         <v-col sm="4">
@@ -169,7 +265,6 @@
               truncate-length="12"
               v-model="photo"
           ></v-file-input>
-
 
           <h6 style="text-align: left">Last known location:</h6>
 
@@ -193,11 +288,8 @@
             </GmapMap>
           </div>
         </v-col>
-
         <v-col sm="2"></v-col>
-
       </v-row>
-
 
       <v-col style="">
         <v-btn
@@ -209,7 +301,6 @@
         </v-btn>
       </v-col>
     </v-form>
-
 
   </v-container>
 </template>
@@ -230,7 +321,7 @@ export default {
       mapOptions: {
         disableDefaultUI: false,
       },
-      mapCenter: {position: {lat:46.7712, lng:23.6236}},
+      mapCenter: {position: {lat: 46.7712, lng: 23.6236}},
       markers: [],
       newMarker: {position: null},
       lastKnownLocation: null,
@@ -239,8 +330,24 @@ export default {
       post: "",
       hasLocation: false,
       hasPhoto: false,
-      dialog: null,
-      threadDialog: null
+      threadDeleteDialog: null,
+      threadEditDialog: null,
+      postDeleteDialog: null,
+      postEditDialog: null,
+      threadEditInput: {},
+      threadTypes: [],
+      animalClasses: [],
+      animalBreeds: [],
+      titleRules: [
+        v => !!v || 'Title is required',
+        v => !!v && v <= 160 || 'Title should have less than 160 characters'
+      ],
+      descriptionRules: [
+        v => !!v || 'Description is required'
+      ],
+      animalBreedRules: [
+        v => !!v && v.id !== null || 'Animal breed is required'
+      ],
     }
   },
 
@@ -250,16 +357,18 @@ export default {
       this.$http.delete('/api/v1/posts/' + id, {
         headers: {
           'Authorization': localStorage.getItem('token')
-        }})
-      .then(() => this.$router.go(0))
+        }
+      })
+          .then(() => this.$router.go(0))
     },
 
     deleteThread(id) {
       this.$http.delete('/api/v1/threads/' + id, {
         headers: {
           'Authorization': localStorage.getItem('token')
-        }})
-      .then(() => this.$router.push('/dashboard'))
+        }
+      })
+          .then(() => this.$router.push('/dashboard'))
     },
 
     addPost() {
@@ -387,6 +496,78 @@ export default {
       let currentUser = JSON.parse(localStorage.getItem('user'));
       let creator = thread.creator;
       return currentUser.role === 'ADMIN' || (currentUser.id === creator.id && currentUser.active === true);
+    },
+
+    shouldShowPostEditButton(post) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      return currentUser.id === post.poster.id && currentUser.active === true;
+    },
+
+    shouldShowThreadEditButton(thread) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      return currentUser.id === thread.creator.id && currentUser.active === true;
+    },
+
+    loadEditThreadDialog(thread) {
+      this.threadEditDialog = true;
+      this.getThreadTypes();
+      this.getAnimalClasses();
+      this.getAnimalBreeds(thread.animalClassId);
+
+      this.threadEditInput = {
+        title: thread.title,
+        description: thread.description,
+        type: thread.type,
+        animalClass: {
+          id: thread.animalClassId,
+          name: thread.animalClassName
+        },
+        animalBreed: {
+          id: thread.animalBreedId,
+          name: thread.animalBreedName
+        }
+      }
+    },
+
+    editThread(threadId) {
+      if (!this.$refs.threadEditForm.validate()) {
+        return;
+      }
+      console.log(threadId);
+    },
+
+    editPost(postId) {
+      console.log(postId);
+    },
+
+    getThreadTypes() {
+      this.$http.get('/api/v1/threads/types',
+          {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => this.threadTypes = response.data)
+    },
+
+    getAnimalClasses() {
+      this.$http.get('/api/v1/classes',
+          {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => this.animalClasses = response.data)
+    },
+
+    getAnimalBreeds(animalClassId) {
+      this.$http.get('/api/v1/breeds?animalClassId=' + animalClassId,
+          {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          })
+          .then(response => {
+            this.animalBreeds = response.data;
+          })
     },
 
     isLoggedInUserActive() {
