@@ -55,11 +55,10 @@
                   :items="animalClasses"
                   :rules="animalClassRules"
                   required
-                  validate-on-blur
                   item-text="name"
                   item-value="id"
                   label="Animal class"
-                  @input="changedClass"
+                  @input="getAnimalBreeds(animalClass)"
                   auto
                   single-line
                   solo
@@ -79,7 +78,6 @@
                   :items="animalBreeds"
                   :rules="animalBreedRules"
                   required
-                  validate-on-blur
                   item-text="name"
                   item-value="id"
                   label="Animal breed"
@@ -137,7 +135,7 @@
           <div>
             <GmapMap
                 ref="mapRef"
-                :center="{lat:46.7712, lng:23.6236}"
+                :center="center"
                 :zoom="12"
                 :options="mapOptions"
                 map-type-id="terrain"
@@ -254,7 +252,8 @@ export default {
   data() {
     return {
       titleRules: [
-        v => !!v || 'Title is required'
+        v => !!v || 'Title is required',
+        v => !!v && v.length <= 160 || 'Title should have less than 160 characters'
       ],
       descriptionRules: [
         v => !!v || 'Description is required'
@@ -275,12 +274,13 @@ export default {
       animalBreeds: [],
       title: "",
       petName: "",
+      center: {lat: 46.7712, lng: 23.6236},
       lastSeenDate: null,
       lastSeenTime: null,
       lastKnownLocation: null,
       marker: {position: {lat: 10, lng: 10}},
       mapOptions: {
-        disableDefaultUI: true,
+        disableDefaultUI: false,
       },
       photo: null,
       photos: [],
@@ -335,7 +335,7 @@ export default {
                     title: this.title,
                     description: this.description,
                     type: this.threadType,
-                    breedId: this.animalBreed.id,
+                    breedId: this.animalBreed,
                     lastKnownLocation: this.lastKnownLocation,
                     lastSeenTime: this.computeDate(),
                     photos: this.photos
@@ -391,7 +391,7 @@ export default {
       })
     },
 
-    changedClass(animalClassId) {
+    getAnimalBreeds(animalClassId) {
       this.$http.get('/api/v1/breeds?animalClassId=' + animalClassId,
           {
             headers: {
@@ -433,8 +433,9 @@ export default {
           .then(response => {
             this.newAnimalClass.dialog = false;
             this.getAnimalClasses();
-            this.animalClass = response.data;
-            this.$refs.createAnimalClassForm.validate();
+            this.animalClass = response.data.id;
+            this.animalBreed = null;
+            this.animalBreeds = [];
           })
           .catch(error => this.newAnimalClass.error = error.body.message)
     },
@@ -454,18 +455,30 @@ export default {
           })
           .then(response => {
             this.newAnimalBreed.dialog = false;
-            this.changedClass(this.animalClass);
-            this.animalBreed = response.data;
-            this.$refs.createAnimalBreedForm.validate(); // todo: investiugate
+            this.getAnimalBreeds(this.animalClass);
+            this.animalBreed = response.data.id;
           })
           .catch(error => this.newAnimalBreed.error = error.body.message)
-    }
+    },
+
+    geolocate() {
+      navigator.geolocation.getCurrentPosition(position => {
+        this.center = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+      });
+    },
 
   },
 
   beforeMount() {
     this.getThreadTypes();
     this.getAnimalClasses();
+  },
+
+  mounted() {
+    this.geolocate();
   }
 
 }

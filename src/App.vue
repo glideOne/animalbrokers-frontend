@@ -4,7 +4,9 @@
         app
         color="primary">
 
-      <div class="d-flex align-center">
+      <div class="d-flex align-center"
+           @click.stop="$router.push('/dashboard')"
+           style="cursor: pointer">
         <v-img
             alt="Vuetify Logo"
             class="shrink mr-2"
