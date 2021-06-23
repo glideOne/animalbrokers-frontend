@@ -280,7 +280,7 @@ export default {
       lastKnownLocation: null,
       marker: {position: {lat: 10, lng: 10}},
       mapOptions: {
-        disableDefaultUI: true,
+        disableDefaultUI: false,
       },
       photo: null,
       photos: [],

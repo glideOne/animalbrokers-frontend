@@ -111,36 +111,73 @@
                       placeholder="Type in all the details of your post here..."
                   ></v-textarea>
 
-                  <v-select
-                      v-model="threadEditInput.type"
-                      :items="threadTypes"
-                      validate-on-blur
-                      item-text="id"
-                      item-value="id"
-                      label="Thread type"
-                  ></v-select>
                   <v-row>
-                    <v-select
-                        v-model="threadEditInput.animalClass"
-                        :items="animalClasses"
-                        validate-on-blur
-                        item-text="name"
-                        item-value="id"
-                        label="Animal class"
-                        @input="getAnimalBreeds"
-                        style="width: 50%; float:left; display: inline-block; padding-right: 10px"
-                    ></v-select>
+                    <v-col sm="6">
+                      <v-select
+                          v-model="threadEditInput.type"
+                          :items="threadTypes"
+                          validate-on-blur
+                          item-text="id"
+                          item-value="id"
+                          label="Thread type"
+                      ></v-select>
+                      <v-select
+                          v-model="threadEditInput.animalClass"
+                          :items="animalClasses"
+                          validate-on-blur
+                          item-text="name"
+                          item-value="id"
+                          label="Animal class"
+                          @input="getAnimalBreeds"
+                      ></v-select>
+                      <v-select
+                          v-model="threadEditInput.animalBreed"
+                          :items="animalBreeds"
+                          :rules="animalBreedRules"
+                          item-text="name"
+                          item-value="id"
+                          label="Animal breed"
+                      ></v-select>
+                    </v-col>
+                    <v-col sm="6">
+                      <v-file-input
+                          counter
+                          show-size
+                          truncate-length="12"
+                          v-model="threadEditInput.newImage"
+                      ></v-file-input>
+                    </v-col>
+                  </v-row>
 
-                    <v-select
-                        v-model="threadEditInput.animalBreed"
-                        :items="animalBreeds"
-                        :rules="animalBreedRules"
-                        validate-on-blur
-                        item-text="name"
-                        item-value="id"
-                        label="Animal breed"
-                        style="width: 50%; float:left; display: inline-block; padding-left: 10px"
-                    ></v-select>
+                  <v-row>
+                    <v-col cols="6">
+                      <v-date-picker v-model="threadEditInput.lastSeenDate">
+                      </v-date-picker>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-time-picker
+                          format="24hr"
+                          v-model="threadEditInput.lastSeenTime"
+                          scrollable
+                      ></v-time-picker>
+                    </v-col>
+                  </v-row>
+
+                  <v-row style="height: 200px">
+                    <GmapMap
+                        ref="editThreadMapRef"
+                        :center="threadEditInput.oldLocation == null ? {lat:46.7712, lng:23.6236} : threadEditInput.oldLocation.position"
+                        :zoom="12"
+                        :options="mapOptions"
+                        map-type-id="terrain"
+                        @click="handleMapClickForThreadEdit"
+                    >
+                      <GmapMarker
+                          :position="threadEditInput.oldLocation.position"
+                          :clickable="true"
+                          @click="panToMarkerForThreadEdit"
+                      />
+                    </GmapMap>
                   </v-row>
                 </v-form>
 
@@ -148,7 +185,7 @@
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn color="primary" text @click="threadEditDialog = false">Cancel</v-btn>
-                <v-btn color="primary" text @click="threadEditDialog = false, editThread(thread.id)">Save</v-btn>
+                <v-btn color="primary" text @click="editThread(thread.id)">Save</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -183,7 +220,7 @@
               <v-card-actions>
                 <v-btn v-if="shouldShowPostEditButton(post)"
                        color="primary" text x-small dark
-                       @click.stop="postEditDialog = true"
+                       @click.stop="loadEditPostDialog(post)"
                 >
                   Edit
                 </v-btn>
@@ -216,12 +253,23 @@
                   <v-card>
                     <v-card-title class="text-h6" style="text-align: left">Edit post</v-card-title>
                     <v-card-text>
-
+                      <v-form ref="postEditForm">
+                        <v-textarea
+                            v-model="postEditInput.text"
+                            :rules="postRules"
+                            validate-on-blur
+                            filled
+                            label="Edit your comment"
+                            auto-grow
+                            height="250px"
+                            placeholder="Add a comment to this thread here..."
+                        ></v-textarea>
+                      </v-form>
                     </v-card-text>
                     <v-card-actions>
                       <v-spacer></v-spacer>
                       <v-btn color="primary" text @click="postEditDialog = false">Cancel</v-btn>
-                      <v-btn color="primary" text @click="postEditDialog = false, editPost(post.id)">Save</v-btn>
+                      <v-btn color="primary" text @click="editPost(post.id)">Save</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -277,7 +325,7 @@
                 map-type-id="terrain"
                 style="height: 155px"
                 @click="handleMapClick"
-            >n
+            >
               <GmapMarker
                   :position="newMarker.position"
                   :clickable="true"
@@ -316,7 +364,9 @@ export default {
         v => !!v || 'Field is required'
       ],
       id: this.$route.params.id,
-      thread: {},
+      thread: {
+        creator: {}
+      },
       image: null,
       mapOptions: {
         disableDefaultUI: false,
@@ -334,13 +384,16 @@ export default {
       threadEditDialog: null,
       postDeleteDialog: null,
       postEditDialog: null,
-      threadEditInput: {},
+      threadEditInput: {
+        oldLocation: {}
+      },
+      postEditInput: {},
       threadTypes: [],
       animalClasses: [],
       animalBreeds: [],
       titleRules: [
         v => !!v || 'Title is required',
-        v => !!v && v <= 160 || 'Title should have less than 160 characters'
+        v => !!v && v.length <= 160 || 'Title should have less than 160 characters'
       ],
       descriptionRules: [
         v => !!v || 'Description is required'
@@ -376,7 +429,7 @@ export default {
         return;
       }
 
-      this.convertPhotoToDto()
+      this.convertPostPhotoToDto()
           .then(() =>
               this.$http.post('/api/v1/posts',
                   {
@@ -394,7 +447,7 @@ export default {
           .catch(error => console.log(error))
     },
 
-    async convertPhotoToDto() {
+    async convertPostPhotoToDto() {
       if (this.photo == null) {
         return null;
       }
@@ -463,6 +516,19 @@ export default {
       this.newMarker.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
       this.lastKnownLocation = {latitude: e.latLng.lat(), longitude: e.latLng.lng()};
     },
+    //
+    // handleThreadEditMarkerDrag(e) {
+    //   this.threadEditInput.marker.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
+    // },
+
+    panToMarkerForThreadEdit() {
+      this.$refs.editThreadMapRef.panTo(this.threadEditInput.oldLocation.position);
+    },
+
+    handleMapClickForThreadEdit(e) {
+      this.threadEditInput.oldLocation.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
+      this.threadEditInput.newLocation = {latitude: e.latLng.lat(), longitude: e.latLng.lng()};
+    },
 
     computePostFields(posts) {
       if (posts == null) {
@@ -518,14 +584,22 @@ export default {
         title: thread.title,
         description: thread.description,
         type: thread.type,
-        animalClass: {
-          id: thread.animalClassId,
-          name: thread.animalClassName
-        },
-        animalBreed: {
-          id: thread.animalBreedId,
-          name: thread.animalBreedName
-        }
+        animalClass: thread.animalClassId,
+        animalBreed: thread.animalBreedId,
+        lastSeenDate: thread.lastSeenTime === null ? null : thread.lastSeenTime.substring(0, 10),
+        lastSeenTime: thread.lastSeenTime === null ? null : thread.lastSeenTime.substring(11, 16),
+        image: this.getExistingImage(this.thread),
+        newImage: null,
+        photos: [],
+        oldLocation: this.extractLocationFromThread(thread),
+        newLocation: null
+      }
+    },
+
+    loadEditPostDialog(post) {
+      this.postEditDialog = true;
+      this.postEditInput = {
+        text: post.text
       }
     },
 
@@ -533,11 +607,83 @@ export default {
       if (!this.$refs.threadEditForm.validate()) {
         return;
       }
-      console.log(threadId);
+      this.convertThreadPhotoToDto()
+          .then(() =>
+              this.$http.put('/api/v1/threads/' + threadId,
+                  {
+                    title: this.threadEditInput.title,
+                    description: this.threadEditInput.description,
+                    type: this.threadEditInput.type,
+                    breedId: this.threadEditInput.animalBreed,
+                    lastSeenTime: this.computeDate(this.threadEditInput.lastSeenDate, this.threadEditInput.lastSeenTime),
+                    photos: this.threadEditInput.photos,
+                    lastKnownLocation: this.threadEditInput.newLocation,
+                  }, {
+                    headers: {
+                      'Authorization': localStorage.getItem('token')
+                    }
+                  }))
+          .then(() => this.$router.go(0));
+    },
+
+    async convertThreadPhotoToDto() {
+      if (this.threadEditInput.newImage == null) {
+        return null;
+      }
+      this.threadEditInput.photos.push({
+        image: await this.readFile(this.threadEditInput.newImage)
+      })
     },
 
     editPost(postId) {
-      console.log(postId);
+      if (!this.$refs.postEditForm[0].validate()) {
+        return;
+      }
+      this.$http.put('/api/v1/posts/' + postId,
+          {
+            text: this.postEditInput.text,
+            threadId: this.thread.id
+          }, {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          })
+          .then(() => this.$router.go(0));
+    },
+
+    computeDate(date, time) {
+      let d = '';
+      if (date != null) {
+        d += date;
+
+        if (time != null) {
+          d += 'T' + time
+        } else {
+          d += 'T' + '00:00'
+        }
+      }
+      return d;
+    },
+
+    getExistingImage(thread) {
+      if (thread.photos === undefined || thread.photos[0] === undefined) {
+        return null;
+      }
+      return 'data:image/jpeg;base64,' + thread.photos[0].image;
+    },
+
+    extractLocationFromThread(thread) {
+      if (thread.lastKnownLocation === undefined) {
+        return {
+          position: {}
+        }
+      }
+      return {
+        position: {
+          lat: thread.lastKnownLocation.latitude,
+          lng: thread.lastKnownLocation.longitude
+        }
+      }
     },
 
     getThreadTypes() {
@@ -566,6 +712,9 @@ export default {
             }
           })
           .then(response => {
+            if (this.thread.animalClassId !== this.threadEditInput.animalClass) {
+              this.threadEditInput.animalBreed = null;
+            }
             this.animalBreeds = response.data;
           })
     },
