@@ -1,60 +1,84 @@
 <template>
-  <div class="container">
-    <br>
-    <h1>Animal Brokers - Create account</h1>
-    <br>
-    <div class="row">
-      <div class="col-md-3"></div>
-      <div class="col-md-6">
-        <form v-if="!submitted">
-          <div class="form-group">
-            <!--            <label for="firstName" class="form-label">First Name:</label>-->
-            <input type="text" class="form-control" id="firstName" placeholder="enter first name" required
-                   v-model="firstName">
-          </div>
-          <div class="form-group">
-            <!--            <label for="lastName" class="form-label">Last Name:</label>-->
-            <input type="text" class="form-control" id="lastName" placeholder="enter last name" required
-                   v-model="lastName">
-          </div>
-          <div class="form-group">
-            <!--            <label for="email" class="form-label">E-mail:</label>-->
-            <input type="email" class="form-control" id="email" placeholder="enter e-mail" required v-model="email">
-          </div>
-          <div class="form-group">
-            <!--            <label for="password" class="form-label">Password:</label>-->
-            <input type="password" class="form-control" placeholder="enter password" id="password" required
-                   v-model="password">
-            <div v-if="password.length > 1 && password.length < 6" class="text-danger">Password should consist of at
-              least 6 characters!
-            </div>
-          </div>
-          <div class="form-group">
-            <!--            <label for="password" class="form-label">Password:</label>-->
-            <input type="password" class="form-control" placeholder="re-enter password" id="reenterPassword" required
-                   v-model="reenterPassword">
-          </div>
-          <div v-if="password != reenterPassword" class="text-danger">Passwords do not match!</div>
-          <div class="form-group">
-            <!--            <label for="userName" class="form-label">Username:</label>-->
-            <input type="text" class="form-control" id="userName" placeholder="enter username" v-model="username">
-            <div id="userNameHelp" class="form-text">You can choose a username as your alias. Or not.</div>
-          </div>
-          <!--          <div class="mb-3 form-check">-->
-          <!--            <input type="checkbox" class="form-check-input" id="exampleCheck1">-->
-          <!--            <label class="form-check-label" for="exampleCheck1">Check me out</label>-->
-          <!--          </div>-->
-          <button style="margin-top: 15pt" v-on:click.prevent="register" id="register" class="btn-lg btn-primary">
-            Register!
-          </button>
-        </form>
+  <v-container>
+    <v-row style="padding-top: 10px">
+      <v-col>
+        <h2>Animal Brokers - Create account</h2>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col sm="3"></v-col>
+      <v-col sm="6">
+        <v-form v-if="!submitted" ref="registerForm">
+          <v-text-field v-model="firstName"
+                        label="First name"
+                        filled dense
+                        :rules="nameRules"
+                        validate-on-blur
+          >
+          </v-text-field>
+
+          <v-text-field v-model="lastName"
+                        label="Last name"
+                        filled dense
+                        :rules="nameRules"
+                        validate-on-blur
+          >
+          </v-text-field>
+
+          <v-text-field v-model="email"
+                        label="E-mail"
+                        filled dense
+                        :rules="emailRules"
+                        validate-on-blur
+          >
+          </v-text-field>
+
+          <v-text-field v-model="password"
+                        label="Password"
+                        filled dense
+                        :rules="passwordRules"
+                        type="password"
+                        validate-on-blur
+          >
+          </v-text-field>
+
+          <v-text-field v-model="reenterPassword"
+                        label="Re-enter password"
+                        filled dense
+                        :rules="reenterPasswordRules"
+                        type="password"
+                        validate-on-blur
+          >
+          </v-text-field>
+
+          <v-text-field v-model="username"
+                        label="Username"
+                        filled dense
+                        validate-on-blur
+                        hint="You can choose a username as your alias. Or not."
+                        persistent-hint
+          >
+          </v-text-field>
+
+          <div v-if="errorMessage != null" style="color: red">{{ this.errorMessage }}</div>
+          <br>
+
+          <v-btn
+              color="primary"
+              elevation="9"
+              @click="register"
+          >Register!
+          </v-btn>
+
+        </v-form>
         <div v-if="submitted">
           <h3>User was created!</h3>
         </div>
-      </div>
+      </v-col>
       <div class="col-md-3"></div>
-    </div>
-  </div>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -64,15 +88,36 @@ export default {
       firstName: "",
       lastName: "",
       email: "",
-      password: "",
+      password: null,
       reenterPassword: "",
       username: "",
       submitted: false,
+      errorMessage: null,
+      nameRules: [
+        v => !!v || 'Name is required.'
+      ],
+      emailRules: [
+        v => !!v || 'E-mail is required.',
+        v => !!v && /.+@.+/.test(v) || 'Invalid e-mail.',
+      ],
+      passwordRules: [
+        v => !!v || 'Password is required',
+        v => !!v && v.length >= 6 || 'Password must have at least 6 characters.',
+      ],
+      reenterPasswordRules: [
+        v => !!v || 'Password is required',
+        v => !!v && v.length >= 6 || 'Password must have at least 6 characters.',
+        v => !!v && this.password !== null && (v === this.password) || 'Passwords do not match!'
+      ]
     }
   },
 
   methods: {
-    register: function () {
+    register() {
+      if (!this.$refs.registerForm.validate()) {
+        return;
+      }
+
       this.$http.post('/api/v1/users', {
         firstName: this.firstName,
         lastName: this.lastName,
@@ -86,23 +131,14 @@ export default {
       }).then(function (response) {
         console.log(response);
         this.submitted = true;
+      }).catch((error) => {
+        this.errorMessage = error.body.message;
       })
     }
   }
 }
 </script>
 
-
 <style scoped>
-.form-group {
-  padding-top: 10pt;
-}
 
-.form-label {
-  float: left;
-  /*border: 1pt black solid;*/
-  padding-left: 10pt;
-  padding-top: 10pt;
-  margin-bottom: 0pt;
-}
 </style>

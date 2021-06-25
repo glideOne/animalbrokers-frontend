@@ -1,7 +1,6 @@
 <template>
-  <div :key="componentKey">
-
-    <v-app-bar dense>
+  <v-container :key="componentKey">
+    <v-app-bar dense style="padding-top: 7px; height: 55px">
       <h2>{{ thread.title }}</h2>
     </v-app-bar>
 
@@ -54,11 +53,149 @@
             <v-img :src="image" width="300" class="ml-3"></v-img>
           </v-col>
         </v-row>
+
+        <v-card-actions>
+          <v-btn v-if="shouldShowThreadEditButton(thread)"
+                 color="primary" text x-small dark
+                 @click.stop="loadEditThreadDialog(thread)"
+          >
+            Edit
+          </v-btn>
+          <v-btn v-if="shouldShowThreadDeleteButton(thread)"
+                 color="primary" text x-small dark
+                 @click.stop="threadDeleteDialog = true"
+          >
+            Delete
+          </v-btn>
+
+          <v-dialog
+              v-model="threadDeleteDialog"
+              max-width="290"
+          >
+            <v-card>
+              <v-card-title class="text-h6" style="text-align: left">Delete thread</v-card-title>
+              <v-card-text style="text-align: left">Are you sure you want to delete the thread?</v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="threadDeleteDialog = false">Cancel</v-btn>
+                <v-btn color="primary" text @click="threadDeleteDialog = false, deleteThread(thread.id)">Delete</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <v-dialog
+              v-model="threadEditDialog"
+              max-width="800"
+          >
+            <v-card>
+              <v-card-title class="text-h6" style="text-align: left">Edit thread</v-card-title>
+              <v-card-text>
+                <v-form ref="threadEditForm">
+                  <v-text-field
+                      v-model="threadEditInput.title"
+                      :counter="160"
+                      label="Thread title"
+                      :rules="titleRules"
+                      required
+                      validate-on-blur
+                      solo-inverted
+                  ></v-text-field>
+
+                  <v-textarea
+                      v-model="threadEditInput.description"
+                      :rules="descriptionRules"
+                      required
+                      validate-on-blur
+                      filled
+                      label="Description"
+                      auto-grow
+                      placeholder="Type in all the details of your post here..."
+                  ></v-textarea>
+
+                  <v-row>
+                    <v-col sm="6">
+                      <v-select
+                          v-model="threadEditInput.type"
+                          :items="threadTypes"
+                          validate-on-blur
+                          item-text="id"
+                          item-value="id"
+                          label="Thread type"
+                      ></v-select>
+                      <v-select
+                          v-model="threadEditInput.animalClass"
+                          :items="animalClasses"
+                          validate-on-blur
+                          item-text="name"
+                          item-value="id"
+                          label="Animal class"
+                          @input="getAnimalBreeds"
+                      ></v-select>
+                      <v-select
+                          v-model="threadEditInput.animalBreed"
+                          :items="animalBreeds"
+                          :rules="animalBreedRules"
+                          item-text="name"
+                          item-value="id"
+                          label="Animal breed"
+                      ></v-select>
+                    </v-col>
+                    <v-col sm="6">
+                      <v-file-input
+                          counter
+                          show-size
+                          truncate-length="12"
+                          v-model="threadEditInput.newImage"
+                      ></v-file-input>
+                    </v-col>
+                  </v-row>
+
+                  <v-row>
+                    <v-col cols="6">
+                      <v-date-picker v-model="threadEditInput.lastSeenDate">
+                      </v-date-picker>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-time-picker
+                          format="24hr"
+                          v-model="threadEditInput.lastSeenTime"
+                          scrollable
+                      ></v-time-picker>
+                    </v-col>
+                  </v-row>
+
+                  <v-row style="height: 200px">
+                    <GmapMap
+                        ref="editThreadMapRef"
+                        :center="threadEditInput.oldLocation == null ? {lat:46.7712, lng:23.6236} : threadEditInput.oldLocation.position"
+                        :zoom="12"
+                        :options="mapOptions"
+                        map-type-id="terrain"
+                        @click="handleMapClickForThreadEdit"
+                    >
+                      <GmapMarker
+                          :position="threadEditInput.oldLocation.position"
+                          :clickable="true"
+                          @click="panToMarkerForThreadEdit"
+                      />
+                    </GmapMap>
+                  </v-row>
+                </v-form>
+
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="primary" text @click="threadEditDialog = false">Cancel</v-btn>
+                <v-btn color="primary" text @click="editThread(thread.id)">Save</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-card-actions>
       </v-card>
 
     </v-col>
 
     <br/>
+
     <v-col>
       <v-row
           :key="post.id"
@@ -72,16 +209,78 @@
                 {{ post.poster.firstName }} {{ post.poster.lastName }}
               </v-card-title>
 
+              <v-card-subtitle>
+                {{ post.created.replace('T', ' ').substring(0, 16) }}
+              </v-card-subtitle>
+
               <v-card-text>
                 {{ post.text }}
               </v-card-text>
+
+              <v-card-actions>
+                <v-btn v-if="shouldShowPostEditButton(post)"
+                       color="primary" text x-small dark
+                       @click.stop="loadEditPostDialog(post)"
+                >
+                  Edit
+                </v-btn>
+                <v-btn v-if="shouldShowPostDeleteButton(post)"
+                       color="primary" text x-small dark
+                       @click.stop="postDeleteDialog = true"
+                >
+                  Delete
+                </v-btn>
+
+                <v-dialog
+                    v-model="postDeleteDialog"
+                    max-width="290"
+                >
+                  <v-card>
+                    <v-card-title class="text-h6" style="text-align: left">Delete post</v-card-title>
+                    <v-card-text style="text-align: left">Are you sure you want to delete the post?</v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn color="primary" text @click="postDeleteDialog = false">Cancel</v-btn>
+                      <v-btn color="primary" text @click="postDeleteDialog = false, deletePost(post.id)">Delete</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+
+                <v-dialog
+                    v-model="postEditDialog"
+                    max-width="600"
+                >
+                  <v-card>
+                    <v-card-title class="text-h6" style="text-align: left">Edit post</v-card-title>
+                    <v-card-text>
+                      <v-form ref="postEditForm">
+                        <v-textarea
+                            v-model="postEditInput.text"
+                            :rules="postRules"
+                            validate-on-blur
+                            filled
+                            label="Edit your comment"
+                            auto-grow
+                            height="250px"
+                            placeholder="Add a comment to this thread here..."
+                        ></v-textarea>
+                      </v-form>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn color="primary" text @click="postEditDialog = false">Cancel</v-btn>
+                      <v-btn color="primary" text @click="editPost(post.id)">Save</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-card-actions>
             </v-col>
 
             <v-col class="shrink" v-if="post.hasPhoto" style="margin-top: 20px">
-<!--                            <v-col align="left">-->
-<!--                              <h6>Last known photo:</h6>-->
-<!--                            </v-col>-->
-                            <v-img :src="post.photos[0].image" width="300" class="ml-3"></v-img>
+              <!--                            <v-col align="left">-->
+              <!--                              <h6>Last known photo:</h6>-->
+              <!--                            </v-col>-->
+              <v-img :src="post.photos[0].image" width="300" class="ml-3"></v-img>
             </v-col>
           </v-row>
         </v-card>
@@ -89,13 +288,10 @@
     </v-col>
 
     <br/>
-    <v-form ref="form">
+    <v-form ref="form" v-if="isLoggedInUserActive()">
       <v-row>
         <v-col sm="2"></v-col>
-
-        <v-col
-            sm="4"
-        >
+        <v-col sm="4">
           <v-textarea
               v-model="post"
               :rules="postRules"
@@ -108,7 +304,6 @@
               height="250px"
               placeholder="Add a comment to this thread here..."
           ></v-textarea>
-
         </v-col>
 
         <v-col sm="4">
@@ -118,7 +313,6 @@
               truncate-length="12"
               v-model="photo"
           ></v-file-input>
-
 
           <h6 style="text-align: left">Last known location:</h6>
 
@@ -131,7 +325,7 @@
                 map-type-id="terrain"
                 style="height: 155px"
                 @click="handleMapClick"
-            >n
+            >
               <GmapMarker
                   :position="newMarker.position"
                   :clickable="true"
@@ -142,11 +336,8 @@
             </GmapMap>
           </div>
         </v-col>
-
         <v-col sm="2"></v-col>
-
       </v-row>
-
 
       <v-col style="">
         <v-btn
@@ -159,8 +350,7 @@
       </v-col>
     </v-form>
 
-
-  </div>
+  </v-container>
 </template>
 
 <script>
@@ -174,12 +364,14 @@ export default {
         v => !!v || 'Field is required'
       ],
       id: this.$route.params.id,
-      thread: {},
+      thread: {
+        creator: {}
+      },
       image: null,
       mapOptions: {
         disableDefaultUI: false,
       },
-      mapCenter: {position: {lat:46.7712, lng:23.6236}},
+      mapCenter: {position: {lat: 46.7712, lng: 23.6236}},
       markers: [],
       newMarker: {position: null},
       lastKnownLocation: null,
@@ -187,18 +379,57 @@ export default {
       photos: [],
       post: "",
       hasLocation: false,
-      hasPhoto: false
+      hasPhoto: false,
+      threadDeleteDialog: null,
+      threadEditDialog: null,
+      postDeleteDialog: null,
+      postEditDialog: null,
+      threadEditInput: {
+        oldLocation: {}
+      },
+      postEditInput: {},
+      threadTypes: [],
+      animalClasses: [],
+      animalBreeds: [],
+      titleRules: [
+        v => !!v || 'Title is required',
+        v => !!v && v.length <= 160 || 'Title should have less than 160 characters'
+      ],
+      descriptionRules: [
+        v => !!v || 'Description is required'
+      ],
+      animalBreedRules: [
+        v => !!v && v.id !== null || 'Animal breed is required'
+      ],
     }
   },
 
   methods: {
+
+    deletePost(id) {
+      this.$http.delete('/api/v1/posts/' + id, {
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        }
+      })
+          .then(() => this.$router.go(0))
+    },
+
+    deleteThread(id) {
+      this.$http.delete('/api/v1/threads/' + id, {
+        headers: {
+          'Authorization': localStorage.getItem('token')
+        }
+      })
+          .then(() => this.$router.push('/dashboard'))
+    },
 
     addPost() {
       if (!this.$refs.form.validate()) {
         return;
       }
 
-      this.convertPhotoToDto()
+      this.convertPostPhotoToDto()
           .then(() =>
               this.$http.post('/api/v1/posts',
                   {
@@ -212,12 +443,11 @@ export default {
                       'Authorization': localStorage.getItem('token')
                     }
                   }))
-          // .then(() => this.$router.push("/thread/" + this.thread.id))
-          .then(response => this.thread.posts.push(response.data))
+          .then(() => this.$router.go(0))
           .catch(error => console.log(error))
     },
 
-    async convertPhotoToDto() {
+    async convertPostPhotoToDto() {
       if (this.photo == null) {
         return null;
       }
@@ -286,6 +516,19 @@ export default {
       this.newMarker.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
       this.lastKnownLocation = {latitude: e.latLng.lat(), longitude: e.latLng.lng()};
     },
+    //
+    // handleThreadEditMarkerDrag(e) {
+    //   this.threadEditInput.marker.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
+    // },
+
+    panToMarkerForThreadEdit() {
+      this.$refs.editThreadMapRef.panTo(this.threadEditInput.oldLocation.position);
+    },
+
+    handleMapClickForThreadEdit(e) {
+      this.threadEditInput.oldLocation.position = {lat: e.latLng.lat(), lng: e.latLng.lng()};
+      this.threadEditInput.newLocation = {latitude: e.latLng.lat(), longitude: e.latLng.lng()};
+    },
 
     computePostFields(posts) {
       if (posts == null) {
@@ -308,6 +551,181 @@ export default {
         }
       }
     },
+
+    shouldShowPostDeleteButton(post) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      let poster = post.poster;
+      return currentUser.role === 'ADMIN' || (currentUser.id === poster.id && currentUser.active === true);
+    },
+
+    shouldShowThreadDeleteButton(thread) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      let creator = thread.creator;
+      return currentUser.role === 'ADMIN' || (currentUser.id === creator.id && currentUser.active === true);
+    },
+
+    shouldShowPostEditButton(post) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      return currentUser.id === post.poster.id && currentUser.active === true;
+    },
+
+    shouldShowThreadEditButton(thread) {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      return currentUser.id === thread.creator.id && currentUser.active === true;
+    },
+
+    loadEditThreadDialog(thread) {
+      this.threadEditDialog = true;
+      this.getThreadTypes();
+      this.getAnimalClasses();
+      this.getAnimalBreeds(thread.animalClassId);
+
+      this.threadEditInput = {
+        title: thread.title,
+        description: thread.description,
+        type: thread.type,
+        animalClass: thread.animalClassId,
+        animalBreed: thread.animalBreedId,
+        lastSeenDate: thread.lastSeenTime === null ? null : thread.lastSeenTime.substring(0, 10),
+        lastSeenTime: thread.lastSeenTime === null ? null : thread.lastSeenTime.substring(11, 16),
+        image: this.getExistingImage(this.thread),
+        newImage: null,
+        photos: [],
+        oldLocation: this.extractLocationFromThread(thread),
+        newLocation: null
+      }
+    },
+
+    loadEditPostDialog(post) {
+      this.postEditDialog = true;
+      this.postEditInput = {
+        text: post.text
+      }
+    },
+
+    editThread(threadId) {
+      if (!this.$refs.threadEditForm.validate()) {
+        return;
+      }
+      this.convertThreadPhotoToDto()
+          .then(() =>
+              this.$http.put('/api/v1/threads/' + threadId,
+                  {
+                    title: this.threadEditInput.title,
+                    description: this.threadEditInput.description,
+                    type: this.threadEditInput.type,
+                    breedId: this.threadEditInput.animalBreed,
+                    lastSeenTime: this.computeDate(this.threadEditInput.lastSeenDate, this.threadEditInput.lastSeenTime),
+                    photos: this.threadEditInput.photos,
+                    lastKnownLocation: this.threadEditInput.newLocation,
+                  }, {
+                    headers: {
+                      'Authorization': localStorage.getItem('token')
+                    }
+                  }))
+          .then(() => this.$router.go(0));
+    },
+
+    async convertThreadPhotoToDto() {
+      if (this.threadEditInput.newImage == null) {
+        return null;
+      }
+      this.threadEditInput.photos.push({
+        image: await this.readFile(this.threadEditInput.newImage)
+      })
+    },
+
+    editPost(postId) {
+      if (!this.$refs.postEditForm[0].validate()) {
+        return;
+      }
+      this.$http.put('/api/v1/posts/' + postId,
+          {
+            text: this.postEditInput.text,
+            threadId: this.thread.id
+          }, {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          })
+          .then(() => this.$router.go(0));
+    },
+
+    computeDate(date, time) {
+      let d = '';
+      if (date != null) {
+        d += date;
+
+        if (time != null) {
+          d += 'T' + time
+        } else {
+          d += 'T' + '00:00'
+        }
+      }
+      return d;
+    },
+
+    getExistingImage(thread) {
+      if (thread.photos === undefined || thread.photos[0] === undefined) {
+        return null;
+      }
+      return 'data:image/jpeg;base64,' + thread.photos[0].image;
+    },
+
+    extractLocationFromThread(thread) {
+      if (thread.lastKnownLocation === undefined) {
+        return {
+          position: {}
+        }
+      }
+      return {
+        position: {
+          lat: thread.lastKnownLocation.latitude,
+          lng: thread.lastKnownLocation.longitude
+        }
+      }
+    },
+
+    getThreadTypes() {
+      this.$http.get('/api/v1/threads/types',
+          {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => this.threadTypes = response.data)
+    },
+
+    getAnimalClasses() {
+      this.$http.get('/api/v1/classes',
+          {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          }).then(response => this.animalClasses = response.data)
+    },
+
+    getAnimalBreeds(animalClassId) {
+      this.$http.get('/api/v1/breeds?animalClassId=' + animalClassId,
+          {
+            headers: {
+              'Authorization': localStorage.getItem('token')
+            }
+          })
+          .then(response => {
+            if (this.thread.animalClassId !== this.threadEditInput.animalClass) {
+              this.threadEditInput.animalBreed = null;
+            }
+            this.animalBreeds = response.data;
+          })
+    },
+
+    isLoggedInUserActive() {
+      let user = localStorage.getItem('user');
+      if (user === null) {
+        return false;
+      }
+      return JSON.parse(user).active;
+    }
 
   },
 

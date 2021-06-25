@@ -4,7 +4,9 @@
         app
         color="primary">
 
-      <div class="d-flex align-center">
+      <div class="d-flex align-center"
+           @click.stop="$router.push('/dashboard')"
+           style="cursor: pointer">
         <v-img
             alt="Vuetify Logo"
             class="shrink mr-2"
@@ -18,28 +20,52 @@
 
       </div>
 
+      <v-col></v-col>
+
+      <v-btn v-if="shouldShowUsersManagement()"
+             color="black"
+             elevation="4"
+             depressed
+             small
+             to="/usersmanagement"
+             style="margin-left: 5px; color: white"
+      >Users Management
+      </v-btn>
+
       <v-spacer></v-spacer>
 
-      <v-btn
-          color="white"
-          elevation="4"
-          outlined
-          text
-          small
-          to="/login"
+      <div v-if="isUserLoggedIn()"
+           style="font-size: 14px; padding-right: 10px">
+        Welcome, {{ getUserFirstName() }}!
+      </div>
+      <v-btn v-if="!isUserLoggedIn()"
+             color="black"
+             elevation="4"
+             depressed
+             small
+             to="/login"
+             style="margin-left: 5px; color: white"
       >Login
       </v-btn>
 
-      <div style="width: 5pt"></div>
-
-      <v-btn
-          color="white"
-          elevation="4"
-          outlined
-          text
-          small
-          to="/register"
+      <v-btn v-if="!isUserLoggedIn()"
+             color="black"
+             elevation="4"
+             depressed
+             small
+             to="/register"
+             style="margin-left: 5px; color: white"
       >Register
+      </v-btn>
+
+      <v-btn v-if="isUserLoggedIn()"
+             color="black"
+             elevation="4"
+             depressed
+             small
+             @click="logout()"
+             style="margin-left: 5px; color: white"
+      >Logout
       </v-btn>
     </v-app-bar>
 
@@ -54,9 +80,37 @@
 export default {
   name: 'App',
 
-  data: () => ({
-    //
-  }),
+  data() {
+    return {}
+  },
+
+  methods: {
+
+    shouldShowUsersManagement() {
+      let currentUser = JSON.parse(localStorage.getItem('user'));
+      if (currentUser === null) {
+        return false;
+      }
+      return currentUser.role === 'ADMIN';
+    },
+
+    isUserLoggedIn() {
+      return localStorage.getItem('token') !== null;
+    },
+
+    getUserFirstName() {
+      if (!this.isUserLoggedIn()) {
+        return '';
+      }
+      return JSON.parse(localStorage.getItem('user')).firstName;
+    },
+
+    logout() {
+      localStorage.clear();
+      this.$router.push('/login');
+    }
+  }
+
 };
 </script>
 
