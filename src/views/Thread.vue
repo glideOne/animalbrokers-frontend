@@ -226,7 +226,7 @@
                 </v-btn>
                 <v-btn v-if="shouldShowPostDeleteButton(post)"
                        color="primary" text x-small dark
-                       @click.stop="postDeleteDialog = true"
+                       @click.stop="loadDeletePostDialog(post)"
                 >
                   Delete
                 </v-btn>
@@ -241,7 +241,7 @@
                     <v-card-actions>
                       <v-spacer></v-spacer>
                       <v-btn color="primary" text @click="postDeleteDialog = false">Cancel</v-btn>
-                      <v-btn color="primary" text @click="postDeleteDialog = false, deletePost(post.id)">Delete</v-btn>
+                      <v-btn color="primary" text @click="postDeleteDialog = false, deletePost()">Delete</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -269,7 +269,7 @@
                     <v-card-actions>
                       <v-spacer></v-spacer>
                       <v-btn color="primary" text @click="postEditDialog = false">Cancel</v-btn>
-                      <v-btn color="primary" text @click="editPost(post.id)">Save</v-btn>
+                      <v-btn color="primary" text @click="editPost()">Save</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -388,6 +388,7 @@ export default {
         oldLocation: {}
       },
       postEditInput: {},
+      postDeleteInput: {},
       threadTypes: [],
       animalClasses: [],
       animalBreeds: [],
@@ -406,8 +407,8 @@ export default {
 
   methods: {
 
-    deletePost(id) {
-      this.$http.delete('/api/v1/posts/' + id, {
+    deletePost() {
+      this.$http.delete('/api/v1/posts/' + this.postDeleteInput.id, {
         headers: {
           'Authorization': localStorage.getItem('token')
         }
@@ -599,7 +600,15 @@ export default {
     loadEditPostDialog(post) {
       this.postEditDialog = true;
       this.postEditInput = {
+        id: post.id,
         text: post.text
+      }
+    },
+
+    loadDeletePostDialog(post) {
+      this.postDeleteDialog = true;
+      this.postDeleteInput = {
+        id: post.id,
       }
     },
 
@@ -635,11 +644,11 @@ export default {
       })
     },
 
-    editPost(postId) {
+    editPost() {
       if (!this.$refs.postEditForm[0].validate()) {
         return;
       }
-      this.$http.put('/api/v1/posts/' + postId,
+      this.$http.put('/api/v1/posts/' + this.postEditInput.id,
           {
             text: this.postEditInput.text,
             threadId: this.thread.id
